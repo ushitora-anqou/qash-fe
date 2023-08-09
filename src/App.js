@@ -229,19 +229,39 @@ function Root(props) {
 }
 
 function App() {
+  const [errorMsg, setErrorMsg] = useState(null);
   const [data, setData] = useState(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      const resp = await fetch("http://localhost:8080/data.json");
-      const json = await resp.json();
+  const fetchData = async () => {
+    const resp = await fetch("http://localhost:8080/data.json");
+    const json = await resp.json();
+    if ("error" in json) {
+      setErrorMsg(json.error);
+    } else {
+      setErrorMsg(null);
       setData(json);
     }
+  };
+
+  useEffect(() => {
     fetchData();
+
+    const socket = new WebSocket(`ws://localhost:8080/ws`);
+    const onMessage = (event) => {
+      if (event.data === "reload") {
+        fetchData();
+      }
+    };
+    socket.addEventListener("message", onMessage);
+    return () => {
+      socket.close();
+      socket.removeEventListener("message", onMessage);
+    };
   }, []);
 
   return (
     <div className="App">
+      {errorMsg && <h1>{errorMsg}</h1>}
       <Root data={data} />
     </div>
   );
