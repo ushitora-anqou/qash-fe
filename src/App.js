@@ -6,7 +6,7 @@ import {
   Link,
   useLoaderData,
 } from "react-router-dom";
-import ChartJS from "chart.js/auto";
+import "chart.js/auto";
 import { Bar } from "react-chartjs-2";
 
 function convertAccountToUrlId(account) {
@@ -25,7 +25,7 @@ function Menu(props) {
   let account_menu = [];
   for (let account in props.data.account) {
     const rows = props.data.account[account];
-    if (rows.length == 0) continue;
+    if (rows.length === 0) continue;
     account_menu.push(
       <div key={account}>
         <Link to={"/account/" + convertAccountToUrlId(account)}>
@@ -123,7 +123,7 @@ function Table(props) {
     for (let pi = 0; pi < tx.postings.length; pi++) {
       let tds = [];
       const p = tx.postings[pi];
-      if (pi == 0) {
+      if (pi === 0) {
         tds.push(<td className="col-date">{tx.date}</td>);
         tds.push(<td className="col-narration">{tx.narration}</td>);
       } else {
