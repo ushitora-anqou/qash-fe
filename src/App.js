@@ -1,10 +1,12 @@
 import "./App.css";
 import { useState, useEffect } from "react";
 import {
-  createHashRouter,
-  RouterProvider,
   Link,
+  Outlet,
+  RouterProvider,
+  createHashRouter,
   useLoaderData,
+  useOutletContext,
 } from "react-router-dom";
 import "chart.js/auto";
 import { Bar } from "react-chartjs-2";
@@ -22,13 +24,15 @@ function convertUrlIdToAccount(url_id) {
 }
 
 function Menu(props) {
+  let { server_name } = useOutletContext();
+
   let account_menu = [];
   for (let account in props.data.account) {
     const rows = props.data.account[account];
     if (rows.length === 0) continue;
     account_menu.push(
       <div key={account}>
-        <Link to={"/account/" + convertAccountToUrlId(account)}>
+        <Link to={`/${server_name}/account/${convertAccountToUrlId(account)}`}>
           <div className="account">
             <div>{account.replaceAll(":", "　")}</div>
             <div className="amount">{rows[0].postings[0].balance_s} JPY</div>
@@ -41,10 +45,10 @@ function Menu(props) {
     <div className="sidebar">
       <h1>Qash</h1>
       <div key="gl">
-        <Link to="/">総勘定元帳</Link>
+        <Link to={`/${server_name}`}>総勘定元帳</Link>
       </div>
       <div key="charts">
-        <Link to="/charts">チャート</Link>
+        <Link to={`/${server_name}/charts`}>チャート</Link>
       </div>
       {account_menu}
     </div>
@@ -181,6 +185,7 @@ function AccountPage(props) {
 
 function ChartPage(props) {
   const d = props.data;
+  if (!d) return <></>;
   return (
     <Page data={d} account="チャート">
       <h2>資産</h2>
@@ -197,56 +202,39 @@ function ChartPage(props) {
   );
 }
 
-function Root(props) {
+function GLPage(props) {
   const d = props.data;
   if (!d) return <></>;
-
-  const router = createHashRouter([
-    {
-      path: "/",
-      element: (
-        <Page data={d}>
-          <Table rows={d.gl} />
-        </Page>
-      ),
-    },
-    {
-      path: "/charts",
-      element: <ChartPage data={d} />,
-    },
-    {
-      path: "/account/:account",
-      loader: accountLoader,
-      element: <AccountPage data={d} />,
-    },
-  ]);
-
   return (
-    <>
-      <RouterProvider router={router} />
-    </>
+    <Page data={d}>
+      <Table rows={d.gl} />
+    </Page>
   );
 }
 
-function App() {
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [data, setData] = useState(null);
+function rootLoader({ params }) {
+  const server_name = params.server_name;
+  return { server_name };
+}
 
-  const fetchData = async () => {
-    const resp = await fetch("http://localhost:8080/data.json");
-    const json = await resp.json();
-    if ("error" in json) {
-      setErrorMsg(json.error);
-    } else {
-      setErrorMsg(null);
-      setData(json);
-    }
-  };
+function Root({ setData, errorMsg, setErrorMsg }) {
+  const { server_name } = useLoaderData();
 
   useEffect(() => {
+    const fetchData = async () => {
+      const resp = await fetch(`http://${server_name}/data.json`);
+      const json = await resp.json();
+      if ("error" in json) {
+        setErrorMsg(json.error);
+      } else {
+        setErrorMsg(null);
+        setData(json);
+      }
+    };
+
     fetchData();
 
-    const socket = new WebSocket(`ws://localhost:8080/ws`);
+    const socket = new WebSocket(`ws://${server_name}/ws`);
     const onMessage = (event) => {
       if (event.data === "reload") {
         fetchData();
@@ -257,13 +245,49 @@ function App() {
       socket.close();
       socket.removeEventListener("message", onMessage);
     };
-  }, []);
+  }, [setData, setErrorMsg, server_name]);
 
   return (
     <div className="App">
       {errorMsg && <h1>{errorMsg}</h1>}
-      <Root data={data} />
+      <Outlet context={{ server_name }} />
     </div>
+  );
+}
+
+function App() {
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [data, setData] = useState(null);
+
+  const router = createHashRouter([
+    {
+      path: "/:server_name",
+      loader: rootLoader,
+      element: (
+        <Root setData={setData} errorMsg={errorMsg} setErrorMsg={setErrorMsg} />
+      ),
+      children: [
+        {
+          path: "",
+          element: <GLPage data={data} />,
+        },
+        {
+          path: "charts",
+          element: <ChartPage data={data} />,
+        },
+        {
+          path: "account/:account",
+          loader: accountLoader,
+          element: <AccountPage data={data} />,
+        },
+      ],
+    },
+  ]);
+
+  return (
+    <>
+      <RouterProvider router={router} />
+    </>
   );
 }
 
