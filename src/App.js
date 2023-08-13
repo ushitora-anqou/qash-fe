@@ -120,7 +120,7 @@ function deepCopy(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
-function TableRow(props) {
+function ClickableTableRow(props) {
   const [shown, setShown] = useState(false);
 
   const head_tr = (
@@ -140,60 +140,34 @@ function TableRow(props) {
   );
 }
 
-function Table(props) {
-  const rows = props.rows;
-  const account = props.account;
-
-  if (!rows) return <></>;
-
-  let trs = [];
-  for (let ti = 0; ti < rows.length; ti++) {
-    const tx = rows[ti];
-
-    let postings = tx.postings;
-    if (account) {
-      // Not gl
-      if (tx.postings.length === 2) {
-        postings = deepCopy(tx.postings.filter((p) => p.account !== account));
-        postings[0].amount *= -1;
-      } else {
-        postings = deepCopy(tx.postings.filter((p) => p.account === account));
-        if (postings.length > 0) postings[0].account = "-- スプリット取引 --";
-      }
-      postings.push(...tx.postings);
+function renderTds(tx, postings) {
+  let rendered = [];
+  for (let pi = 0; pi < postings.length; pi++) {
+    let tds = [];
+    const p = postings[pi];
+    if (pi === 0) {
+      tds.push(<td className="col-date">{tx.date}</td>);
+      tds.push(<td className="col-narration">{tx.narration}</td>);
+    } else {
+      tds.push(<td className="col-date"></td>);
+      tds.push(<td className="col-narration"></td>);
     }
-
-    let rendered = [];
-    for (let pi = 0; pi < postings.length; pi++) {
-      let tds = [];
-      const p = postings[pi];
-      if (pi === 0) {
-        tds.push(<td className="col-date">{tx.date}</td>);
-        tds.push(<td className="col-narration">{tx.narration}</td>);
-      } else {
-        tds.push(<td className="col-date"></td>);
-        tds.push(<td className="col-narration"></td>);
-      }
-      if (p.amount < 0) {
-        tds.push(<td className="col-account">{p.account}</td>);
-        tds.push(<td className="col-debit"></td>);
-        tds.push(<td className="col-credit">{p.abs_amount_s}</td>);
-      } else {
-        tds.push(<td className="col-account">{p.account}</td>);
-        tds.push(<td className="col-debit">{p.abs_amount_s}</td>);
-        tds.push(<td className="col-credit"></td>);
-      }
-      tds.push(
-        <td className="col-balance">
-          {account && pi !== 0 ? "" : p.balance_s}
-        </td>,
-      );
-      rendered.push(tds);
+    if (p.amount < 0) {
+      tds.push(<td className="col-account">{p.account}</td>);
+      tds.push(<td className="col-debit"></td>);
+      tds.push(<td className="col-credit">{p.abs_amount_s}</td>);
+    } else {
+      tds.push(<td className="col-account">{p.account}</td>);
+      tds.push(<td className="col-debit">{p.abs_amount_s}</td>);
+      tds.push(<td className="col-credit"></td>);
     }
-
-    trs.push(<TableRow head={rendered[0]} hidden={rendered.slice(1)} />);
+    tds.push(<td className="col-balance">{pi !== 0 ? "" : p.balance_s}</td>);
+    rendered.push(tds);
   }
+  return rendered;
+}
 
+function renderTransactionsTable(trs) {
   return (
     <>
       <table className="transactions">
@@ -213,6 +187,52 @@ function Table(props) {
   );
 }
 
+function GLTable(props) {
+  const rows = props.rows;
+
+  if (!rows) return <></>;
+
+  let trs = [];
+  for (let ti = 0; ti < rows.length; ti++) {
+    const tx = rows[ti];
+    let postings = tx.postings;
+    const rendered = renderTds(tx, postings);
+    for (let tds of rendered) trs.push(<tr className="row-normal">{tds}</tr>);
+  }
+
+  return renderTransactionsTable(trs);
+}
+
+function AccountTable(props) {
+  const rows = props.rows;
+  const account = props.account;
+
+  if (!rows) return <></>;
+
+  let trs = [];
+  for (let ti = 0; ti < rows.length; ti++) {
+    const tx = rows[ti];
+
+    let postings = tx.postings;
+    // Not gl
+    if (tx.postings.length === 2) {
+      postings = deepCopy(tx.postings.filter((p) => p.account !== account));
+      postings[0].amount *= -1;
+    } else {
+      postings = deepCopy(tx.postings.filter((p) => p.account === account));
+      if (postings.length > 0) postings[0].account = "-- スプリット取引 --";
+    }
+    postings.push(...tx.postings);
+
+    const rendered = renderTds(tx, postings);
+    trs.push(
+      <ClickableTableRow head={rendered[0]} hidden={rendered.slice(1)} />,
+    );
+  }
+
+  return renderTransactionsTable(trs);
+}
+
 function accountLoader({ params }) {
   const account = convertUrlIdToAccount(params.account);
   return { account };
@@ -224,7 +244,7 @@ function AccountPage(props) {
   if (!rows || rows.length === 0) return <></>;
   return (
     <Page data={props.data} account={account}>
-      <Table rows={rows} account={account} />
+      <AccountTable rows={rows} account={account} />
     </Page>
   );
 }
@@ -253,7 +273,7 @@ function GLPage(props) {
   if (!d) return <></>;
   return (
     <Page data={d}>
-      <Table rows={d.gl} />
+      <GLTable rows={d.gl} />
     </Page>
   );
 }
