@@ -31,11 +31,17 @@ table.transactions thead td {
   border: 2px solid black;
   font-weight: bold;
 }
-table.transactions tbody tr:nth-child(even) {
+table.transactions tbody tr.row-normal:nth-child(even) {
   background-color: #f6ffda;
 }
-table.transactions tbody tr:nth-child(odd) {
+table.transactions tbody tr.row-normal:nth-child(odd) {
   background-color: #bfdeb9;
+}
+table.transactions tbody tr.row-hidden {
+  display: none;
+}
+table.transactions tbody tr.row-hidden-shown {
+  background-color: #ede7d3;
 }
 table.transactions,
 table.transactions th,

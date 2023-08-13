@@ -116,17 +116,57 @@ function Chart(props) {
   return <Bar options={options} data={data} />;
 }
 
+function deepCopy(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function TableRow(props) {
+  const [shown, setShown] = useState(false);
+
+  const head_tr = (
+    <tr className="row-normal" onClick={(e) => setShown((v) => !v)}>
+      {props.head}
+    </tr>
+  );
+  const hidden_trs = props.hidden.map((tds) => (
+    <tr className={shown ? "row-hidden-shown" : "row-hidden"}>{tds}</tr>
+  ));
+
+  return (
+    <>
+      {head_tr}
+      {hidden_trs}
+    </>
+  );
+}
+
 function Table(props) {
   const rows = props.rows;
+  const account = props.account;
 
   if (!rows) return <></>;
 
   let trs = [];
   for (let ti = 0; ti < rows.length; ti++) {
     const tx = rows[ti];
-    for (let pi = 0; pi < tx.postings.length; pi++) {
+
+    let postings = tx.postings;
+    if (account) {
+      // Not gl
+      if (tx.postings.length === 2) {
+        postings = deepCopy(tx.postings.filter((p) => p.account !== account));
+        postings[0].amount *= -1;
+      } else {
+        postings = deepCopy(tx.postings.filter((p) => p.account === account));
+        if (postings.length > 0) postings[0].account = "-- スプリット取引 --";
+      }
+      postings.push(...tx.postings);
+    }
+
+    let rendered = [];
+    for (let pi = 0; pi < postings.length; pi++) {
       let tds = [];
-      const p = tx.postings[pi];
+      const p = postings[pi];
       if (pi === 0) {
         tds.push(<td className="col-date">{tx.date}</td>);
         tds.push(<td className="col-narration">{tx.narration}</td>);
@@ -143,9 +183,15 @@ function Table(props) {
         tds.push(<td className="col-debit">{p.abs_amount_s}</td>);
         tds.push(<td className="col-credit"></td>);
       }
-      tds.push(<td className="col-balance">{p.balance_s}</td>);
-      trs.push(<tr>{tds}</tr>);
+      tds.push(
+        <td className="col-balance">
+          {account && pi !== 0 ? "" : p.balance_s}
+        </td>,
+      );
+      rendered.push(tds);
     }
+
+    trs.push(<TableRow head={rendered[0]} hidden={rendered.slice(1)} />);
   }
 
   return (
@@ -178,7 +224,7 @@ function AccountPage(props) {
   if (!rows || rows.length === 0) return <></>;
   return (
     <Page data={props.data} account={account}>
-      <Table rows={rows} />
+      <Table rows={rows} account={account} />
     </Page>
   );
 }
