@@ -213,16 +213,16 @@ function AccountTable(props) {
   for (let ti = 0; ti < rows.length; ti++) {
     const tx = rows[ti];
 
-    let postings = tx.postings;
-    // Not gl
+    const posting = deepCopy(
+      tx.postings.filter((p) => p.account === account),
+    )[0];
     if (tx.postings.length === 2) {
-      postings = deepCopy(tx.postings.filter((p) => p.account !== account));
-      postings[0].amount *= -1;
+      const target = tx.postings.filter((p) => p.account !== account);
+      posting.account = target[0].account;
     } else {
-      postings = deepCopy(tx.postings.filter((p) => p.account === account));
-      if (postings.length > 0) postings[0].account = "-- スプリット取引 --";
+      posting.account = "-- スプリット取引 --";
     }
-    postings.push(...tx.postings);
+    const postings = [posting].concat(tx.postings);
 
     const rendered = renderTds(tx, postings);
     trs.push(
