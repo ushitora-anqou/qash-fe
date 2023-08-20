@@ -1,5 +1,5 @@
 import "./App.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Link,
   Outlet,
@@ -250,21 +250,80 @@ function AccountPage(props) {
 }
 
 function ChartPage(props) {
+  const [focus, setFocus] = useState(null);
+  const focusRef = useRef(null);
   const d = props.data;
   if (!d) return <></>;
+
+  let overlay = <></>;
+  if (focus !== null) {
+    let chart = <></>;
+    switch (focus) {
+      case 0:
+        chart = <Chart rows={d.asset} stacked={true} />;
+        break;
+      case 1:
+        chart = <Chart rows={d.liability} stacked={true} />;
+        break;
+      case 2:
+        chart = <Chart rows={d.income} stacked={true} />;
+        break;
+      case 3:
+        chart = <Chart rows={d.expense} stacked={true} />;
+        break;
+      case 4:
+        chart = <Chart rows={d.cashflow} stacked={true} />;
+        break;
+      default:
+        break;
+    }
+
+    overlay = (
+      <div className="overlay">
+        <div className="overlay-content">
+          <button onClick={() => setFocus(null)}>close</button>
+          {chart}
+        </div>
+      </div>
+    );
+  }
+
+  const onClickFocus = (i) => () => {
+    setFocus(i);
+    focusRef.current.focus({ preventScroll: true });
+  };
+
   return (
-    <Page data={d} account="チャート">
-      <h2>資産</h2>
-      <Chart rows={d.asset} stacked={true} />
-      <h2>負債</h2>
-      <Chart rows={d.liability} stacked={true} />
-      <h2>収益</h2>
-      <Chart rows={d.income} stacked={true} />
-      <h2>費用</h2>
-      <Chart rows={d.expense} stacked={true} />
-      <h2>キャッシュフロー</h2>
-      <Chart rows={d.cashflow} stacked={true} />
-    </Page>
+    <>
+      <div
+        ref={focusRef}
+        tabIndex="-1"
+        onKeyDown={(e) => {
+          if (e.keyCode === 27) {
+            setFocus(null);
+          }
+        }}
+      >
+        {overlay}
+      </div>
+      <Page data={d} account="チャート">
+        <h2>資産</h2>
+        <button onClick={onClickFocus(0)}>focus</button>
+        <Chart rows={d.asset} stacked={true} />
+        <h2>負債</h2>
+        <button onClick={onClickFocus(1)}>focus</button>
+        <Chart rows={d.liability} stacked={true} />
+        <h2>収益</h2>
+        <button onClick={onClickFocus(2)}>focus</button>
+        <Chart rows={d.income} stacked={true} />
+        <h2>費用</h2>
+        <button onClick={onClickFocus(3)}>focus</button>
+        <Chart rows={d.expense} stacked={true} />
+        <h2>キャッシュフロー</h2>
+        <button onClick={onClickFocus(4)}>focus</button>
+        <Chart rows={d.cashflow} stacked={true} />
+      </Page>
+    </>
   );
 }
 
