@@ -425,7 +425,7 @@ function ReportPage(props) {
   useEffect(() => {
     const labelIndex = sessionStorage.getItem(sessionStorageKey);
     if (labelIndex !== null) setLabelIndex(parseInt(labelIndex));
-  }, []);
+  }, [sessionStorageKey]);
 
   const d = props.data;
   if (!d) return <></>;
@@ -494,13 +494,21 @@ function ReportPage(props) {
       const out_sum = get_sum(cashflow_out);
       const out_detail = get_detail(cashflow_out);
       const net = in_sum - out_sum;
-      upperTds.push(<td>{render_inner_table("支出", out_sum, out_detail)}</td>);
-      upperTds.push(<td>{render_inner_table("収入", in_sum, in_detail)}</td>);
       if (net >= 0) {
+        upperTds.push(
+          <td>{render_inner_table("支出", out_sum, out_detail)}</td>,
+        );
+        upperTds.push(
+          <td rowspan={2}>{render_inner_table("収入", in_sum, in_detail)}</td>,
+        );
         lowerTds.push(<td>{render_inner_table("利益", net, [])}</td>);
-        lowerTds.push(<td className="hidden"></td>);
       } else {
-        lowerTds.push(<td className="hidden"></td>);
+        upperTds.push(
+          <td rowspan={2}>
+            {render_inner_table("支出", out_sum, out_detail)}
+          </td>,
+        );
+        upperTds.push(<td>{render_inner_table("収入", in_sum, in_detail)}</td>);
         lowerTds.push(<td>{render_inner_table("損失", -net, [])}</td>);
       }
       break;
@@ -515,17 +523,25 @@ function ReportPage(props) {
       const income_sum = get_sum(d.income100);
       const income_detail = get_detail(d.income100);
       const net = income_sum - expense_sum;
-      upperTds.push(
-        <td>{render_inner_table("費用", expense_sum, expense_detail)}</td>,
-      );
-      upperTds.push(
-        <td>{render_inner_table("収益", income_sum, income_detail)}</td>,
-      );
       if (net >= 0) {
+        upperTds.push(
+          <td>{render_inner_table("費用", expense_sum, expense_detail)}</td>,
+        );
+        upperTds.push(
+          <td rowspan={2}>
+            {render_inner_table("収益", income_sum, income_detail)}
+          </td>,
+        );
         lowerTds.push(<td>{render_inner_table("当期純利益", net, [])}</td>);
-        lowerTds.push(<td className="hidden"></td>);
       } else {
-        lowerTds.push(<td className="hidden"></td>);
+        upperTds.push(
+          <td rowspan={2}>
+            {render_inner_table("費用", expense_sum, expense_detail)}
+          </td>,
+        );
+        upperTds.push(
+          <td>{render_inner_table("収益", income_sum, income_detail)}</td>,
+        );
         lowerTds.push(<td>{render_inner_table("当期純損失", -net, [])}</td>);
       }
       break;
@@ -533,7 +549,7 @@ function ReportPage(props) {
 
     case "bs": {
       title = "貸借対照表";
-      descPostfix = "時点";
+      descPostfix = "時点：";
 
       const asset_sum = get_sum(d.asset100);
       const asset_detail = get_detail(d.asset100);
@@ -541,12 +557,13 @@ function ReportPage(props) {
       const liability_detail = get_detail(d.liability100);
       const net = asset_sum - liability_sum;
       upperTds.push(
-        <td>{render_inner_table("資産", asset_sum, asset_detail)}</td>,
+        <td rowspan={2}>
+          {render_inner_table("資産", asset_sum, asset_detail)}
+        </td>,
       );
       upperTds.push(
         <td>{render_inner_table("負債", liability_sum, liability_detail)}</td>,
       );
-      lowerTds.push(<td className="hidden"></td>);
       lowerTds.push(<td>{render_inner_table("資本", net, [])}</td>);
 
       break;
