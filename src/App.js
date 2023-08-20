@@ -7,7 +7,6 @@ import {
   createHashRouter,
   useLoaderData,
   useOutletContext,
-  useSearchParams,
 } from "react-router-dom";
 import "chart.js/auto";
 import { Bar } from "react-chartjs-2";
@@ -427,7 +426,6 @@ function ReportPage(props) {
   const d = props.data;
   if (!d) return <></>;
   const labels = d.expense.labels;
-  const data = d.expense.data;
 
   const get_sum = (rows) => {
     let sum = 0;
@@ -518,6 +516,8 @@ function ReportPage(props) {
 
       break;
     }
+
+    default:
   }
 
   return (
