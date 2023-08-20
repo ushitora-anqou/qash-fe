@@ -101,16 +101,20 @@ table.pl {
   border: 1px solid black;
   border-collapse: collapse;
 }
-table.pl > tbody > tr > td.shown {
+table.pl > tbody > tr > td {
   vertical-align: top;
   border: 1px solid black;
   border-bottom: 0;
+}
+table.pl > tbody > tr > td.hidden {
+  border: 0;
 }
 table.pl thead {
   font-weight: bold;
 }
 table.pl-detail {
   width: 100%;
+  padding: 1em;
 }
 table.pl-detail tbody .account {
   padding-left: 1em;

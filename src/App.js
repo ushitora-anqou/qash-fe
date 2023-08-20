@@ -66,6 +66,9 @@ function Menu(props) {
       <div key="charts">
         <Link to={`/${server_name}/charts`}>チャート</Link>
       </div>
+      <div key="bs">
+        <Link to={`/${server_name}/bs`}>貸借対照表</Link>
+      </div>
       <div key="pl">
         <Link to={`/${server_name}/pl`}>損益計算書</Link>
       </div>
@@ -411,7 +414,8 @@ function Root({ setData, errorMsg, setErrorMsg }) {
   );
 }
 
-function PLPage(props) {
+function ReportPage(props) {
+  const reportKind = props.kind;
   const [labelIndex, setLabelIndex] = useState(0);
 
   // Restore labelIndex from sessionStorage
@@ -464,12 +468,60 @@ function PLPage(props) {
     </table>
   );
 
-  const expense_sum = get_sum(d.expense),
-    income_sum = get_sum(d.income),
-    net = income_sum - expense_sum;
+  let title = "";
+  let descPostfix = "";
+  let upperTds = [],
+    lowerTds = [];
+  switch (reportKind) {
+    case "pl": {
+      title = "損益計算書";
+      descPostfix = "までの 1 ヶ月間：";
+
+      const expense_sum = get_sum(d.expense);
+      const expense_detail = get_detail(d.expense);
+      const income_sum = get_sum(d.income);
+      const income_detail = get_detail(d.income);
+      const net = income_sum - expense_sum;
+      upperTds.push(
+        <td>{render_inner_table("費用", expense_sum, expense_detail)}</td>,
+      );
+      upperTds.push(
+        <td>{render_inner_table("収益", income_sum, income_detail)}</td>,
+      );
+      if (net >= 0) {
+        lowerTds.push(<td>{render_inner_table("当期純利益", net, [])}</td>);
+        lowerTds.push(<td className="hidden"></td>);
+      } else {
+        lowerTds.push(<td className="hidden"></td>);
+        lowerTds.push(<td>{render_inner_table("当期純損失", -net, [])}</td>);
+      }
+      break;
+    }
+
+    case "bs": {
+      title = "貸借対照表";
+      descPostfix = "時点";
+
+      const asset_sum = get_sum(d.asset);
+      const asset_detail = get_detail(d.asset);
+      const liability_sum = get_sum(d.liability);
+      const liability_detail = get_detail(d.liability);
+      const net = asset_sum - liability_sum;
+      upperTds.push(
+        <td>{render_inner_table("資産", asset_sum, asset_detail)}</td>,
+      );
+      upperTds.push(
+        <td>{render_inner_table("負債", liability_sum, liability_detail)}</td>,
+      );
+      lowerTds.push(<td className="hidden"></td>);
+      lowerTds.push(<td>{render_inner_table("資本", net, [])}</td>);
+
+      break;
+    }
+  }
 
   return (
-    <Page account="損益計算書" data={d}>
+    <Page account={title} data={d}>
       <div>
         <p>
           <select
@@ -485,48 +537,25 @@ function PLPage(props) {
               <option value={index}>{label}</option>
             ))}
           </select>
-          より前の 1 ヶ月間：
+          {descPostfix}
         </p>
       </div>
       <table className="pl">
         <tbody>
-          <tr>
-            <td className="shown">
-              {render_inner_table(
-                "費用",
-                get_sum(d.expense),
-                get_detail(d.expense),
-              )}
-            </td>
-            <td className="shown">
-              {render_inner_table(
-                "収益",
-                get_sum(d.income),
-                get_detail(d.income),
-              )}
-            </td>
-          </tr>
-          <tr>
-            {net >= 0 ? (
-              <>
-                <td className="shown">
-                  {render_inner_table("当期純利益", net, [])}
-                </td>
-                <td></td>
-              </>
-            ) : (
-              <>
-                <td></td>
-                <td className="shown">
-                  {render_inner_table("当期純損失", -net, [])}
-                </td>
-              </>
-            )}
-          </tr>
+          <tr>{upperTds}</tr>
+          <tr>{lowerTds}</tr>
         </tbody>
       </table>
     </Page>
   );
+}
+
+function PLPage(props) {
+  return <ReportPage kind="pl" data={props.data} />;
+}
+
+function BSPage(props) {
+  return <ReportPage kind="bs" data={props.data} />;
 }
 
 function App() {
@@ -548,6 +577,10 @@ function App() {
         {
           path: "charts",
           element: <ChartPage data={data} />,
+        },
+        {
+          path: "bs",
+          element: <BSPage data={data} />,
         },
         {
           path: "pl",
