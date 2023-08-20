@@ -412,8 +412,13 @@ function Root({ setData, errorMsg, setErrorMsg }) {
 }
 
 function PLPage(props) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const labelIndex = searchParams.get("labelIndex") || 0;
+  const [labelIndex, setLabelIndex] = useState(0);
+
+  // Restore labelIndex from sessionStorage
+  useEffect(() => {
+    const labelIndex = sessionStorage.getItem("plpage-labelIndex");
+    if (labelIndex !== null) setLabelIndex(parseInt(labelIndex));
+  }, []);
 
   const d = props.data;
   if (!d) return <></>;
@@ -468,8 +473,13 @@ function PLPage(props) {
       <div>
         <p>
           <select
-            onChange={(e) => setSearchParams({ labelIndex: e.target.value })}
+            value={labelIndex}
             defaultValue={labelIndex}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              sessionStorage.setItem("plpage-labelIndex", newValue);
+              setLabelIndex(newValue);
+            }}
           >
             {labels.map((label, index) => (
               <option value={index}>{label}</option>
