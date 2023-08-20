@@ -479,13 +479,16 @@ function ReportPage(props) {
       title = "キャッシュフロー計算書";
       descPostfix = "からの 1 ヶ月間：";
 
-      const cashflow_data_in = d.cashflow.data.filter((x) => x.stack === "in");
-      const cashflow_data_out = d.cashflow.data.filter(
+      const labels = d.cashflow100.labels;
+      const cashflow_data_in = d.cashflow100.data.filter(
+        (x) => x.stack === "in",
+      );
+      const cashflow_data_out = d.cashflow100.data.filter(
         (x) => x.stack === "out",
       );
-      const cashflow_in = { labels: d.cashflow.labels, data: cashflow_data_in };
+      const cashflow_in = { labels, data: cashflow_data_in };
       const cashflow_out = {
-        labels: d.cashflow.labels,
+        labels,
         data: cashflow_data_out,
       };
 
