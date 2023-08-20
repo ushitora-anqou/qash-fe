@@ -477,10 +477,10 @@ function ReportPage(props) {
       title = "損益計算書";
       descPostfix = "までの 1 ヶ月間：";
 
-      const expense_sum = get_sum(d.expense);
-      const expense_detail = get_detail(d.expense);
-      const income_sum = get_sum(d.income);
-      const income_detail = get_detail(d.income);
+      const expense_sum = get_sum(d.expense100);
+      const expense_detail = get_detail(d.expense100);
+      const income_sum = get_sum(d.income100);
+      const income_detail = get_detail(d.income100);
       const net = income_sum - expense_sum;
       upperTds.push(
         <td>{render_inner_table("費用", expense_sum, expense_detail)}</td>,
@@ -502,10 +502,10 @@ function ReportPage(props) {
       title = "貸借対照表";
       descPostfix = "時点";
 
-      const asset_sum = get_sum(d.asset);
-      const asset_detail = get_detail(d.asset);
-      const liability_sum = get_sum(d.liability);
-      const liability_detail = get_detail(d.liability);
+      const asset_sum = get_sum(d.asset100);
+      const asset_detail = get_detail(d.asset100);
+      const liability_sum = get_sum(d.liability100);
+      const liability_detail = get_detail(d.liability100);
       const net = asset_sum - liability_sum;
       upperTds.push(
         <td>{render_inner_table("資産", asset_sum, asset_detail)}</td>,
