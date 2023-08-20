@@ -31,10 +31,10 @@ table.transactions thead td {
   border: 2px solid black;
   font-weight: bold;
 }
-table.transactions tbody tr.row-normal:nth-child(even) {
+table.transactions tbody tr.row-normal-even {
   background-color: #f6ffda;
 }
-table.transactions tbody tr.row-normal:nth-child(odd) {
+table.transactions tbody tr.row-normal-odd {
   background-color: #bfdeb9;
 }
 table.transactions tbody tr.row-hidden {

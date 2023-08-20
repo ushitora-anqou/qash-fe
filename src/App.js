@@ -124,7 +124,10 @@ function ClickableTableRow(props) {
   const [shown, setShown] = useState(false);
 
   const head_tr = (
-    <tr className="row-normal" onClick={(e) => setShown((v) => !v)}>
+    <tr
+      className={props.index % 2 === 0 ? "row-normal-even" : "row-normal-odd"}
+      onClick={(e) => setShown((v) => !v)}
+    >
       {props.head}
     </tr>
   );
@@ -197,7 +200,12 @@ function GLTable(props) {
     const tx = rows[ti];
     let postings = tx.postings;
     const rendered = renderTds(tx, postings);
-    for (let tds of rendered) trs.push(<tr className="row-normal">{tds}</tr>);
+    for (let i = 0; i < rendered.length; i++)
+      trs.push(
+        <tr className={i % 2 === 0 ? "row-normal-even" : "row-normal-odd"}>
+          {rendered[i]}
+        </tr>,
+      );
   }
 
   return renderTransactionsTable(trs);
@@ -226,7 +234,11 @@ function AccountTable(props) {
 
     const rendered = renderTds(tx, postings);
     trs.push(
-      <ClickableTableRow head={rendered[0]} hidden={rendered.slice(1)} />,
+      <ClickableTableRow
+        index={ti}
+        head={rendered[0]}
+        hidden={rendered.slice(1)}
+      />,
     );
   }
 
