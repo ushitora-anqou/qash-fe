@@ -7,6 +7,7 @@ import {
   createHashRouter,
   useLoaderData,
   useOutletContext,
+  useSearchParams,
 } from "react-router-dom";
 import "chart.js/auto";
 import { Bar } from "react-chartjs-2";
@@ -23,6 +24,21 @@ function convertUrlIdToAccount(url_id) {
   );
 }
 
+function putCommas(num) {
+  return Intl.NumberFormat().format(num);
+}
+
+function LinkToAccountPage(props) {
+  let { server_name } = useOutletContext();
+  return (
+    <Link
+      to={`/${server_name}/account/${convertAccountToUrlId(props.account)}`}
+    >
+      {props.children}
+    </Link>
+  );
+}
+
 function Menu(props) {
   let { server_name } = useOutletContext();
 
@@ -32,12 +48,12 @@ function Menu(props) {
     if (rows.length === 0) continue;
     account_menu.push(
       <div key={account}>
-        <Link to={`/${server_name}/account/${convertAccountToUrlId(account)}`}>
+        <LinkToAccountPage account={account}>
           <div className="account">
             <div>{account.replaceAll(":", "　")}</div>
             <div className="amount">{rows[0].postings[0].balance_s} JPY</div>
           </div>
-        </Link>
+        </LinkToAccountPage>
       </div>,
     );
   }
@@ -49,6 +65,9 @@ function Menu(props) {
       </div>
       <div key="charts">
         <Link to={`/${server_name}/charts`}>チャート</Link>
+      </div>
+      <div key="pl">
+        <Link to={`/${server_name}/pl`}>損益計算書</Link>
       </div>
       {account_menu}
     </div>
@@ -392,6 +411,114 @@ function Root({ setData, errorMsg, setErrorMsg }) {
   );
 }
 
+function PLPage(props) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const labelIndex = searchParams.get("labelIndex") || 0;
+
+  const d = props.data;
+  if (!d) return <></>;
+  const labels = d.expense.labels;
+  const data = d.expense.data;
+
+  const get_sum = (rows) => {
+    let sum = 0;
+    for (let x of rows.data) sum += x.data[labelIndex];
+    return sum;
+  };
+  const get_detail = (rows) => {
+    const detail = [];
+    for (let x of rows.data) {
+      detail.push({
+        account: x.account,
+        amount: x.data[labelIndex],
+      });
+    }
+    return detail;
+  };
+
+  const render_inner_table = (name, sum, detail) => (
+    <table className="pl-detail">
+      <thead>
+        <tr>
+          <td>{name}</td>
+          <td className="amount">{putCommas(sum)}</td>
+        </tr>
+      </thead>
+      <tbody>
+        {detail.map((x) => (
+          <tr>
+            <td className="account">
+              <LinkToAccountPage account={x.account}>
+                {x.account}
+              </LinkToAccountPage>
+            </td>
+            <td className="amount">{putCommas(x.amount)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const expense_sum = get_sum(d.expense),
+    income_sum = get_sum(d.income),
+    net = income_sum - expense_sum;
+
+  return (
+    <Page account="損益計算書" data={d}>
+      <div>
+        <p>
+          <select
+            onChange={(e) => setSearchParams({ labelIndex: e.target.value })}
+            defaultValue={labelIndex}
+          >
+            {labels.map((label, index) => (
+              <option value={index}>{label}</option>
+            ))}
+          </select>
+          より前の 1 ヶ月間：
+        </p>
+      </div>
+      <table className="pl">
+        <tbody>
+          <tr>
+            <td className="shown">
+              {render_inner_table(
+                "費用",
+                get_sum(d.expense),
+                get_detail(d.expense),
+              )}
+            </td>
+            <td className="shown">
+              {render_inner_table(
+                "収益",
+                get_sum(d.income),
+                get_detail(d.income),
+              )}
+            </td>
+          </tr>
+          <tr>
+            {net >= 0 ? (
+              <>
+                <td className="shown">
+                  {render_inner_table("当期純利益", net, [])}
+                </td>
+                <td></td>
+              </>
+            ) : (
+              <>
+                <td></td>
+                <td className="shown">
+                  {render_inner_table("当期純損失", -net, [])}
+                </td>
+              </>
+            )}
+          </tr>
+        </tbody>
+      </table>
+    </Page>
+  );
+}
+
 function App() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [data, setData] = useState(null);
@@ -411,6 +538,10 @@ function App() {
         {
           path: "charts",
           element: <ChartPage data={data} />,
+        },
+        {
+          path: "pl",
+          element: <PLPage data={data} />,
         },
         {
           path: "account/:account",

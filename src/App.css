@@ -67,10 +67,10 @@ table.transactions td {
   margin-left: 25%;
   width: 70%;
 }
-.amount {
+.sidebar .amount {
   text-align: right;
 }
-.account {
+.sidebar .account {
   border: 1px solid black;
   padding: 5px;
   margin: 5px;
@@ -95,4 +95,26 @@ table.transactions td {
   width: 100%;
   padding: 1em;
   background: #ffffff;
+}
+
+table.pl {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+table.pl > tbody > tr > td.shown {
+  vertical-align: top;
+  border: 1px solid black;
+  border-bottom: 0;
+}
+table.pl thead {
+  font-weight: bold;
+}
+table.pl-detail {
+  width: 100%;
+}
+table.pl-detail tbody .account {
+  padding-left: 1em;
+}
+table.pl-detail .amount {
+  text-align: right;
 }
