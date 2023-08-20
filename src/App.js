@@ -71,6 +71,9 @@ function Menu(props) {
       <div key="pl">
         <Link to={`/${server_name}/pl`}>損益計算書</Link>
       </div>
+      <div key="cf">
+        <Link to={`/${server_name}/cf`}>キャッシュフロー計算書</Link>
+      </div>
       {account_menu}
     </div>
   );
@@ -416,10 +419,11 @@ function Root({ setData, errorMsg, setErrorMsg }) {
 function ReportPage(props) {
   const reportKind = props.kind;
   const [labelIndex, setLabelIndex] = useState(0);
+  const sessionStorageKey = `reportpage-${reportKind}-labelIndex`;
 
   // Restore labelIndex from sessionStorage
   useEffect(() => {
-    const labelIndex = sessionStorage.getItem("plpage-labelIndex");
+    const labelIndex = sessionStorage.getItem(sessionStorageKey);
     if (labelIndex !== null) setLabelIndex(parseInt(labelIndex));
   }, []);
 
@@ -471,6 +475,37 @@ function ReportPage(props) {
   let upperTds = [],
     lowerTds = [];
   switch (reportKind) {
+    case "cf": {
+      title = "キャッシュフロー計算書";
+      descPostfix = "からの 1 ヶ月間：";
+
+      const cashflow_data_in = d.cashflow.data.filter((x) => x.stack === "in");
+      const cashflow_data_out = d.cashflow.data.filter(
+        (x) => x.stack === "out",
+      );
+      const cashflow_in = { labels: d.cashflow.labels, data: cashflow_data_in };
+      const cashflow_out = {
+        labels: d.cashflow.labels,
+        data: cashflow_data_out,
+      };
+
+      const in_sum = get_sum(cashflow_in);
+      const in_detail = get_detail(cashflow_in);
+      const out_sum = get_sum(cashflow_out);
+      const out_detail = get_detail(cashflow_out);
+      const net = in_sum - out_sum;
+      upperTds.push(<td>{render_inner_table("支出", out_sum, out_detail)}</td>);
+      upperTds.push(<td>{render_inner_table("収入", in_sum, in_detail)}</td>);
+      if (net >= 0) {
+        lowerTds.push(<td>{render_inner_table("利益", net, [])}</td>);
+        lowerTds.push(<td className="hidden"></td>);
+      } else {
+        lowerTds.push(<td className="hidden"></td>);
+        lowerTds.push(<td>{render_inner_table("損失", -net, [])}</td>);
+      }
+      break;
+    }
+
     case "pl": {
       title = "損益計算書";
       descPostfix = "までの 1 ヶ月間：";
@@ -529,7 +564,7 @@ function ReportPage(props) {
             defaultValue={labelIndex}
             onChange={(e) => {
               const newValue = e.target.value;
-              sessionStorage.setItem("plpage-labelIndex", newValue);
+              sessionStorage.setItem(sessionStorageKey, newValue);
               setLabelIndex(newValue);
             }}
           >
@@ -556,6 +591,10 @@ function PLPage(props) {
 
 function BSPage(props) {
   return <ReportPage kind="bs" data={props.data} />;
+}
+
+function CFPage(props) {
+  return <ReportPage kind="cf" data={props.data} />;
 }
 
 function App() {
@@ -585,6 +624,10 @@ function App() {
         {
           path: "pl",
           element: <PLPage data={data} />,
+        },
+        {
+          path: "cf",
+          element: <CFPage data={data} />,
         },
         {
           path: "account/:account",
