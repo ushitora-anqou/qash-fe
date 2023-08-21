@@ -50,7 +50,7 @@ function Menu(props) {
         <LinkToAccountPage account={account}>
           <div className="account">
             <div>{account.replaceAll(":", "　")}</div>
-            <div className="amount">{rows[0].postings[0].balance_s} JPY</div>
+            <div className="amount">{putCommas(rows[0].postings[0].balance)} JPY</div>
           </div>
         </LinkToAccountPage>
       </div>,
@@ -182,13 +182,13 @@ function renderTds(tx, postings) {
     if (p.amount < 0) {
       tds.push(<td className="col-account">{p.account}</td>);
       tds.push(<td className="col-debit"></td>);
-      tds.push(<td className="col-credit">{p.abs_amount_s}</td>);
+      tds.push(<td className="col-credit">{putCommas(Math.abs(p.amount))}</td>);
     } else {
       tds.push(<td className="col-account">{p.account}</td>);
-      tds.push(<td className="col-debit">{p.abs_amount_s}</td>);
+      tds.push(<td className="col-debit">{putCommas(Math.abs(p.amount))}</td>);
       tds.push(<td className="col-credit"></td>);
     }
-    tds.push(<td className="col-balance">{pi !== 0 ? "" : p.balance_s}</td>);
+    tds.push(<td className="col-balance">{putCommas(pi !== 0 ? "" : p.balance)}</td>);
     rendered.push(tds);
   }
   return rendered;
