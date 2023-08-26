@@ -50,7 +50,9 @@ function Menu(props) {
         <LinkToAccountPage account={account}>
           <div className="account">
             <div>{account.replaceAll(":", "　")}</div>
-            <div className="amount">{putCommas(rows[0].postings[0].balance)} JPY</div>
+            <div className="amount">
+              {putCommas(rows[0].postings[0].balance)} JPY
+            </div>
           </div>
         </LinkToAccountPage>
       </div>,
@@ -188,7 +190,9 @@ function renderTds(tx, postings) {
       tds.push(<td className="col-debit">{putCommas(Math.abs(p.amount))}</td>);
       tds.push(<td className="col-credit"></td>);
     }
-    tds.push(<td className="col-balance">{putCommas(pi !== 0 ? "" : p.balance)}</td>);
+    tds.push(
+      <td className="col-balance">{putCommas(pi !== 0 ? "" : p.balance)}</td>,
+    );
     rendered.push(tds);
   }
   return rendered;
@@ -226,7 +230,11 @@ function GLTable(props) {
     const rendered = renderTds(tx, postings);
     for (let i = 0; i < rendered.length; i++)
       trs.push(
-        <tr className={trs.length % 2 === 0 ? "row-normal-even" : "row-normal-odd"}>
+        <tr
+          className={
+            trs.length % 2 === 0 ? "row-normal-even" : "row-normal-odd"
+          }
+        >
           {rendered[i]}
         </tr>,
       );
