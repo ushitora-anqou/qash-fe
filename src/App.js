@@ -226,7 +226,7 @@ function GLTable(props) {
     const rendered = renderTds(tx, postings);
     for (let i = 0; i < rendered.length; i++)
       trs.push(
-        <tr className={i % 2 === 0 ? "row-normal-even" : "row-normal-odd"}>
+        <tr className={trs.length % 2 === 0 ? "row-normal-even" : "row-normal-odd"}>
           {rendered[i]}
         </tr>,
       );
