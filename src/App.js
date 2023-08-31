@@ -260,7 +260,7 @@ function AccountTable(props) {
       const target = tx.postings.filter((p) => p.account !== account);
       posting.account = target[0].account;
     } else {
-      posting.account = "-- スプリット取引 --";
+      posting.account = "----- 諸口 -----";
     }
     const postings = [posting].concat(tx.postings);
 
