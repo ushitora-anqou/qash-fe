@@ -68,13 +68,24 @@ function Menu(props) {
         <Link to={`/${server_name}/charts`}>チャート</Link>
       </div>
       <div key="bs">
-        <Link to={`/${server_name}/bs`}>貸借対照表</Link>
+        <Link to={`/${server_name}/bs`}>貸借対照表（月別）</Link>
+      </div>
+      <div key="bs">
+        <Link to={`/${server_name}/bs_yearly`}>貸借対照表（年別）</Link>
       </div>
       <div key="pl">
-        <Link to={`/${server_name}/pl`}>損益計算書</Link>
+        <Link to={`/${server_name}/pl`}>損益計算書（月別）</Link>
+      </div>
+      <div key="pl">
+        <Link to={`/${server_name}/pl_yearly`}>損益計算書（年別）</Link>
       </div>
       <div key="cf">
-        <Link to={`/${server_name}/cf`}>キャッシュフロー計算書</Link>
+        <Link to={`/${server_name}/cf`}>キャッシュフロー計算書（月別）</Link>
+      </div>
+      <div key="cf">
+        <Link to={`/${server_name}/cf_yearly`}>
+          キャッシュフロー計算書（年別）
+        </Link>
       </div>
       {account_menu}
     </div>
@@ -437,7 +448,6 @@ function ReportPage(props) {
 
   const d = props.data;
   if (!d) return <></>;
-  const labels = d.expense.labels;
 
   const get_sum = (rows) => {
     let sum = 0;
@@ -482,105 +492,116 @@ function ReportPage(props) {
   let descPostfix = "";
   let upperTds = [],
     lowerTds = [];
-  switch (reportKind) {
-    case "cf": {
-      title = "キャッシュフロー計算書";
-      descPostfix = "からの 1 ヶ月間：";
+  let labels = [];
 
-      const labels = d.cashflow100.labels;
-      const cashflow_data_in = d.cashflow100.data.filter(
-        (x) => x.stack === "in",
+  const handle_cf = (cashflow100) => {
+    title = "キャッシュフロー計算書";
+    descPostfix = "からの 1 ヶ月間：";
+
+    labels = cashflow100.labels;
+    const cashflow_data_in = cashflow100.data.filter((x) => x.stack === "in");
+    const cashflow_data_out = cashflow100.data.filter((x) => x.stack === "out");
+    const cashflow_in = { labels, data: cashflow_data_in };
+    const cashflow_out = {
+      labels,
+      data: cashflow_data_out,
+    };
+
+    const in_sum = get_sum(cashflow_in);
+    const in_detail = get_detail(cashflow_in);
+    const out_sum = get_sum(cashflow_out);
+    const out_detail = get_detail(cashflow_out);
+    const net = in_sum - out_sum;
+    if (net >= 0) {
+      upperTds.push(<td>{render_inner_table("支出", out_sum, out_detail)}</td>);
+      upperTds.push(
+        <td rowspan={2}>{render_inner_table("収入", in_sum, in_detail)}</td>,
       );
-      const cashflow_data_out = d.cashflow100.data.filter(
-        (x) => x.stack === "out",
+      lowerTds.push(<td>{render_inner_table("利益", net, [])}</td>);
+    } else {
+      upperTds.push(
+        <td rowspan={2}>{render_inner_table("支出", out_sum, out_detail)}</td>,
       );
-      const cashflow_in = { labels, data: cashflow_data_in };
-      const cashflow_out = {
-        labels,
-        data: cashflow_data_out,
-      };
-
-      const in_sum = get_sum(cashflow_in);
-      const in_detail = get_detail(cashflow_in);
-      const out_sum = get_sum(cashflow_out);
-      const out_detail = get_detail(cashflow_out);
-      const net = in_sum - out_sum;
-      if (net >= 0) {
-        upperTds.push(
-          <td>{render_inner_table("支出", out_sum, out_detail)}</td>,
-        );
-        upperTds.push(
-          <td rowspan={2}>{render_inner_table("収入", in_sum, in_detail)}</td>,
-        );
-        lowerTds.push(<td>{render_inner_table("利益", net, [])}</td>);
-      } else {
-        upperTds.push(
-          <td rowspan={2}>
-            {render_inner_table("支出", out_sum, out_detail)}
-          </td>,
-        );
-        upperTds.push(<td>{render_inner_table("収入", in_sum, in_detail)}</td>);
-        lowerTds.push(<td>{render_inner_table("損失", -net, [])}</td>);
-      }
-      break;
+      upperTds.push(<td>{render_inner_table("収入", in_sum, in_detail)}</td>);
+      lowerTds.push(<td>{render_inner_table("損失", -net, [])}</td>);
     }
+  };
 
-    case "pl": {
-      title = "損益計算書";
-      descPostfix = "までの 1 ヶ月間：";
+  const handle_pl = (income100, expense100) => {
+    title = "損益計算書";
+    descPostfix = "までの 1 ヶ月間：";
 
-      const expense_sum = get_sum(d.expense100);
-      const expense_detail = get_detail(d.expense100);
-      const income_sum = get_sum(d.income100);
-      const income_detail = get_detail(d.income100);
-      const net = income_sum - expense_sum;
-      if (net >= 0) {
-        upperTds.push(
-          <td>{render_inner_table("費用", expense_sum, expense_detail)}</td>,
-        );
-        upperTds.push(
-          <td rowspan={2}>
-            {render_inner_table("収益", income_sum, income_detail)}
-          </td>,
-        );
-        lowerTds.push(<td>{render_inner_table("当期純利益", net, [])}</td>);
-      } else {
-        upperTds.push(
-          <td rowspan={2}>
-            {render_inner_table("費用", expense_sum, expense_detail)}
-          </td>,
-        );
-        upperTds.push(
-          <td>{render_inner_table("収益", income_sum, income_detail)}</td>,
-        );
-        lowerTds.push(<td>{render_inner_table("当期純損失", -net, [])}</td>);
-      }
-      break;
-    }
-
-    case "bs": {
-      title = "貸借対照表";
-      descPostfix = "時点：";
-
-      const asset_sum = get_sum(d.asset100);
-      const asset_detail = get_detail(d.asset100);
-      const liability_sum = get_sum(d.liability100);
-      const liability_detail = get_detail(d.liability100);
-      const net = asset_sum - liability_sum;
+    labels = expense100.labels;
+    const expense_sum = get_sum(expense100);
+    const expense_detail = get_detail(expense100);
+    const income_sum = get_sum(income100);
+    const income_detail = get_detail(income100);
+    const net = income_sum - expense_sum;
+    if (net >= 0) {
+      upperTds.push(
+        <td>{render_inner_table("費用", expense_sum, expense_detail)}</td>,
+      );
       upperTds.push(
         <td rowspan={2}>
-          {render_inner_table("資産", asset_sum, asset_detail)}
+          {render_inner_table("収益", income_sum, income_detail)}
+        </td>,
+      );
+      lowerTds.push(<td>{render_inner_table("当期純利益", net, [])}</td>);
+    } else {
+      upperTds.push(
+        <td rowspan={2}>
+          {render_inner_table("費用", expense_sum, expense_detail)}
         </td>,
       );
       upperTds.push(
-        <td>{render_inner_table("負債", liability_sum, liability_detail)}</td>,
+        <td>{render_inner_table("収益", income_sum, income_detail)}</td>,
       );
-      lowerTds.push(<td>{render_inner_table("資本", net, [])}</td>);
-
-      break;
+      lowerTds.push(<td>{render_inner_table("当期純損失", -net, [])}</td>);
     }
+  };
 
+  const handle_bs = (asset100, liability100) => {
+    title = "貸借対照表";
+    descPostfix = "時点：";
+
+    labels = asset100.labels;
+    const asset_sum = get_sum(asset100);
+    const asset_detail = get_detail(asset100);
+    const liability_sum = get_sum(liability100);
+    const liability_detail = get_detail(liability100);
+    const net = asset_sum - liability_sum;
+    upperTds.push(
+      <td rowspan={2}>
+        {render_inner_table("資産", asset_sum, asset_detail)}
+      </td>,
+    );
+    upperTds.push(
+      <td>{render_inner_table("負債", liability_sum, liability_detail)}</td>,
+    );
+    lowerTds.push(<td>{render_inner_table("資本", net, [])}</td>);
+  };
+
+  switch (reportKind) {
+    case "cf":
+      handle_cf(d.cashflow100);
+      break;
+    case "pl":
+      handle_pl(d.income100, d.expense100);
+      break;
+    case "bs":
+      handle_bs(d.asset100, d.liability100);
+      break;
+    case "cf_yearly":
+      handle_cf(d.cashflow_yearly);
+      break;
+    case "pl_yearly":
+      handle_pl(d.income_yearly, d.expense_yearly);
+      break;
+    case "bs_yearly":
+      handle_bs(d.asset_yearly, d.liability_yearly);
+      break;
     default:
+      throw new Error("invalid reportKind");
   }
 
   return (
@@ -625,6 +646,18 @@ function CFPage(props) {
   return <ReportPage kind="cf" data={props.data} />;
 }
 
+function PLYearlyPage(props) {
+  return <ReportPage kind="pl_yearly" data={props.data} />;
+}
+
+function BSYearlyPage(props) {
+  return <ReportPage kind="bs_yearly" data={props.data} />;
+}
+
+function CFYearlyPage(props) {
+  return <ReportPage kind="cf_yearly" data={props.data} />;
+}
+
 function App() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [data, setData] = useState(null);
@@ -644,6 +677,18 @@ function App() {
         {
           path: "charts",
           element: <ChartPage data={data} />,
+        },
+        {
+          path: "bs_yearly",
+          element: <BSYearlyPage data={data} />,
+        },
+        {
+          path: "pl_yearly",
+          element: <PLYearlyPage data={data} />,
+        },
+        {
+          path: "cf_yearly",
+          element: <CFYearlyPage data={data} />,
         },
         {
           path: "bs",
