@@ -402,7 +402,13 @@ function Root({ setData, errorMsg, setErrorMsg }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const resp = await fetch(`http://${server_name}/data.json`);
+      let url = `${server_name}/data.json`;
+      let resp = null;
+      try {
+        resp = await fetch(`http://${url}`);
+      } catch (e) {
+        resp = await fetch(`https://${url}`);
+      }
       const json = await resp.json();
       if ("error" in json) {
         setErrorMsg(json.error);
@@ -414,17 +420,21 @@ function Root({ setData, errorMsg, setErrorMsg }) {
 
     fetchData();
 
-    const socket = new WebSocket(`ws://${server_name}/ws`);
-    const onMessage = (event) => {
-      if (event.data === "reload") {
-        fetchData();
-      }
-    };
-    socket.addEventListener("message", onMessage);
-    return () => {
-      socket.close();
-      socket.removeEventListener("message", onMessage);
-    };
+    try {
+      const socket = new WebSocket(`ws://${server_name}/ws`);
+      const onMessage = (event) => {
+        if (event.data === "reload") {
+          fetchData();
+        }
+      };
+      socket.addEventListener("message", onMessage);
+      return () => {
+        socket.close();
+        socket.removeEventListener("message", onMessage);
+      };
+    } catch (e) {
+    }
+    return;
   }, [setData, setErrorMsg, server_name]);
 
   return (
