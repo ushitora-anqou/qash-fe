@@ -2,6 +2,7 @@ import "./App.css";
 import { useState, useEffect, useRef } from "react";
 import {
   Link,
+  Navigate,
   Outlet,
   RouterProvider,
   createHashRouter,
@@ -673,6 +674,12 @@ function App() {
   const [data, setData] = useState(null);
 
   const router = createHashRouter([
+    {
+      path: "/",
+      element: (
+        <Navigate to={"/" + window.location.host} replace={true} />
+      ),
+    },
     {
       path: "/:server_name",
       loader: rootLoader,
