@@ -8,6 +8,7 @@ import {
   createHashRouter,
   useLoaderData,
   useOutletContext,
+  useLocation,
 } from "react-router-dom";
 import "chart.js/auto";
 import { Bar } from "react-chartjs-2";
@@ -41,6 +42,7 @@ function LinkToAccountPage(props) {
 
 function Menu(props) {
   let { server_name, year } = useOutletContext();
+  let location = useLocation();
 
   let account_menu = [];
   for (let account in props.data.account) {
@@ -62,6 +64,19 @@ function Menu(props) {
   return (
     <div className="sidebar">
       <h1>Qash</h1>
+      <div>
+      {
+        ["2024", "2023", "2022"].map((cand) => {
+          // get pathname from currect location without server_name and year
+          let pathname = location.pathname.split("/").slice(3).join("/");
+          return (
+          <>
+          <input type="radio" checked={cand === year} />
+            <label><Link to={`/${server_name}/${cand}/${pathname}`}>{cand}</Link></label>
+          </>
+        )})
+      }
+            </div>
       <div key="gl">
         <Link to={`/${server_name}/${year}`}>総勘定元帳</Link>
       </div>
