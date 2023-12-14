@@ -29,10 +29,10 @@ function putCommas(num) {
 }
 
 function LinkToAccountPage(props) {
-  let { server_name } = useOutletContext();
+  let { server_name, year } = useOutletContext();
   return (
     <Link
-      to={`/${server_name}/account/${convertAccountToUrlId(props.account)}`}
+      to={`/${server_name}/${year}/account/${convertAccountToUrlId(props.account)}`}
     >
       {props.children}
     </Link>
@@ -40,7 +40,7 @@ function LinkToAccountPage(props) {
 }
 
 function Menu(props) {
-  let { server_name } = useOutletContext();
+  let { server_name, year } = useOutletContext();
 
   let account_menu = [];
   for (let account in props.data.account) {
@@ -63,28 +63,28 @@ function Menu(props) {
     <div className="sidebar">
       <h1>Qash</h1>
       <div key="gl">
-        <Link to={`/${server_name}`}>総勘定元帳</Link>
+        <Link to={`/${server_name}/${year}`}>総勘定元帳</Link>
       </div>
       <div key="charts">
-        <Link to={`/${server_name}/charts`}>チャート</Link>
+        <Link to={`/${server_name}/${year}/charts`}>チャート</Link>
       </div>
       <div key="bs">
-        <Link to={`/${server_name}/bs`}>貸借対照表（月別）</Link>
+        <Link to={`/${server_name}/${year}/bs`}>貸借対照表（月別）</Link>
       </div>
       <div key="bs">
-        <Link to={`/${server_name}/bs_yearly`}>貸借対照表（年別）</Link>
+        <Link to={`/${server_name}/${year}/bs_yearly`}>貸借対照表（年別）</Link>
       </div>
       <div key="pl">
-        <Link to={`/${server_name}/pl`}>損益計算書（月別）</Link>
+        <Link to={`/${server_name}/${year}/pl`}>損益計算書（月別）</Link>
       </div>
       <div key="pl">
-        <Link to={`/${server_name}/pl_yearly`}>損益計算書（年別）</Link>
+        <Link to={`/${server_name}/${year}/pl_yearly`}>損益計算書（年別）</Link>
       </div>
       <div key="cf">
-        <Link to={`/${server_name}/cf`}>キャッシュフロー計算書（月別）</Link>
+        <Link to={`/${server_name}/${year}/cf`}>キャッシュフロー計算書（月別）</Link>
       </div>
       <div key="cf">
-        <Link to={`/${server_name}/cf_yearly`}>
+        <Link to={`/${server_name}/${year}/cf_yearly`}>
           キャッシュフロー計算書（年別）
         </Link>
       </div>
@@ -306,10 +306,11 @@ function AccountPage(props) {
 }
 
 function ChartPage(props) {
+  let { year } = useOutletContext();
   const [focus, setFocus] = useState(null);
   const focusRef = useRef(null);
-  const d = props.data;
-  if (!d) return <></>;
+  if (!props.data) return <></>;
+  const d = props.data[year];
 
   let overlay = <></>;
   if (focus !== null) {
@@ -395,11 +396,12 @@ function GLPage(props) {
 
 function rootLoader({ params }) {
   const server_name = params.server_name;
-  return { server_name };
+  const year = params.year;
+  return { server_name, year };
 }
 
 function Root({ setData, errorMsg, setErrorMsg }) {
-  const { server_name } = useLoaderData();
+  const { server_name, year } = useLoaderData();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -441,12 +443,13 @@ function Root({ setData, errorMsg, setErrorMsg }) {
   return (
     <div className="App">
       {errorMsg && <h1>{errorMsg}</h1>}
-      <Outlet context={{ server_name }} />
+      <Outlet context={{ server_name, year }} />
     </div>
   );
 }
 
 function ReportPage(props) {
+  let { year } = useOutletContext();
   const reportKind = props.kind;
   const [labelIndex, setLabelIndex] = useState(0);
   const sessionStorageKey = `reportpage-${reportKind}-labelIndex`;
@@ -457,8 +460,8 @@ function ReportPage(props) {
     if (labelIndex !== null) setLabelIndex(parseInt(labelIndex));
   }, [sessionStorageKey]);
 
-  const d = props.data;
-  if (!d) return <></>;
+  if (!props.data) return <></>;
+  const d = props.data[year];
 
   const get_sum = (rows) => {
     let sum = 0;
@@ -677,11 +680,11 @@ function App() {
     {
       path: "/",
       element: (
-        <Navigate to={"/" + window.location.host} replace={true} />
+        <Navigate to={"/" + window.location.host + "/2023"} replace={true} />
       ),
     },
     {
-      path: "/:server_name",
+      path: "/:server_name/:year",
       loader: rootLoader,
       element: (
         <Root setData={setData} errorMsg={errorMsg} setErrorMsg={setErrorMsg} />
