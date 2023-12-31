@@ -525,7 +525,7 @@ function ReportPage(props) {
 
   const handle_cf = (cashflow100) => {
     title = "キャッシュフロー計算書";
-    descPostfix = "からの 1 ヶ月間：";
+    descPostfix = "末までの 1 ヶ月間：";
 
     labels = cashflow100.labels;
     const cashflow_data_in = cashflow100.data.filter((x) => x.stack === "in");
@@ -558,7 +558,7 @@ function ReportPage(props) {
 
   const handle_pl = (income100, expense100) => {
     title = "損益計算書";
-    descPostfix = "までの 1 ヶ月間：";
+    descPostfix = "末までの 1 ヶ月間：";
 
     labels = expense100.labels;
     const expense_sum = get_sum(expense100);
@@ -591,7 +591,7 @@ function ReportPage(props) {
 
   const handle_bs = (asset100, liability100) => {
     title = "貸借対照表";
-    descPostfix = "時点：";
+    descPostfix = "末時点：";
 
     labels = asset100.labels;
     const asset_sum = get_sum(asset100);
