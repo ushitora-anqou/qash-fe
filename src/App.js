@@ -66,7 +66,7 @@ function Menu(props) {
       <h1>Qash</h1>
       <div>
       {
-        ["2024", "2023", "2022"].map((cand) => {
+        ["2025", "2024", "2023", "2022"].map((cand) => {
           // get pathname from currect location without server_name and year
           let pathname = location.pathname.split("/").slice(3).join("/");
           return (
